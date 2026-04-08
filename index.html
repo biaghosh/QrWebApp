@@ -19,8 +19,15 @@
 <script>
 function onScanSuccess(decodedText, decodedResult) {
   console.log(`QR Code scanned: ${decodedText}`);
-  alert(`Scanned: ${decodedText}`);
-  // We'll send this to Google Sheets in the next step
+  
+  // Assume QR code format: "Name,Email"
+  const [name, email] = decodedText.split(",");
+
+  // Send to Google Sheet
+  fetch("https://script.google.com/macros/s/AKfycbxoKVWgxOvt6N73Aeq752LQZbYLjUwPZ1dBi-sPZhHBgX-PtuCKBaafCzem8tAmyC1ENg/exec?name=" + encodeURIComponent(name) + "&email=" + encodeURIComponent(email))
+    .then(response => response.text())
+    .then(data => alert("Saved to Google Sheet: " + data))
+    .catch(err => alert("Error saving: " + err));
 }
 
 var html5QrcodeScanner = new Html5QrcodeScanner(
