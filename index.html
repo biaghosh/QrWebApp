@@ -7,6 +7,7 @@
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
     #reader { width: 300px; margin: auto; }
+    #result { margin-top: 20px; font-weight: bold; color: green; }
   </style>
 </head>
 <body>
@@ -15,23 +16,51 @@
 <p>Scan a QR code to capture name and email.</p>
 
 <div id="reader"></div>
+<div id="result">Waiting for scan...</div>
 
 <script>
+let lastScan = null;
+
 function onScanSuccess(decodedText, decodedResult) {
-  console.log(`QR Code scanned: ${decodedText}`);
-  
-  // Assume QR code format: "Name,Email"
-  const [name, email] = decodedText.split(",");
+  // Prevent duplicate scans
+  if (decodedText === lastScan) return;
+  lastScan = decodedText;
+
+  console.log("QR Code scanned:", decodedText);
+
+  // Show scanned text on page
+  document.getElementById("result").innerText = "Scanned: " + decodedText;
+
+  // Extract Name and Email
+  const parts = decodedText.split(",");
+  if (parts.length < 2) {
+    document.getElementById("result").innerText += " ❌ Invalid format";
+    return;
+  }
+
+  const name = parts[0].trim();
+  const email = parts[1].trim();
 
   // Send to Google Sheet
-  fetch("https://script.google.com/macros/s/AKfycbxoKVWgxOvt6N73Aeq752LQZbYLjUwPZ1dBi-sPZhHBgX-PtuCKBaafCzem8tAmyC1ENg/exec?name=" + encodeURIComponent(name) + "&email=" + encodeURIComponent(email))
+  fetch("https://script.google.com/macros/s/AKfycbxoKVWgxOvt6N73Aeq752LQZbYLjUwPZ1dBi-sPZhHBgX-PtuCKBaafCzem8tAmyC1ENg/exec?name=" 
+        + encodeURIComponent(name) 
+        + "&email=" + encodeURIComponent(email))
     .then(response => response.text())
-    .then(data => alert("Saved to Google Sheet: " + data))
-    .catch(err => alert("Error saving: " + err));
+    .then(data => {
+      document.getElementById("result").innerText += " ✅ Saved";
+    })
+    .catch(err => {
+      document.getElementById("result").innerText += " ❌ Error";
+      console.error(err);
+    });
 }
 
 var html5QrcodeScanner = new Html5QrcodeScanner(
-  "reader", { fps: 10, qrbox: 250 });
+  "reader",
+  { fps: 10, qrbox: 250 },
+  false // 🔥 disables verbose logs / default alerts
+);
+
 html5QrcodeScanner.render(onScanSuccess);
 </script>
 
