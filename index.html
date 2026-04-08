@@ -1,59 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>QR Code Scanner</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    #reader { width: 300px; margin: auto; }
-    #status { margin-top: 15px; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<title>QR Scanner - BioInVision</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
+    color: #fff;
+    text-align: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+  }
+  #reader {
+    width: 320px;
+    margin: 20px auto;
+    border: 2px solid #fff;
+    border-radius: 12px;
+    padding: 10px;
+    background-color: rgba(255,255,255,0.05);
+  }
+  #formBox {
+    display: none;
+    margin-top: 30px;
+    background-color: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 12px;
+  }
+  input, textarea {
+    padding: 12px;
+    width: 90%;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: none;
+    font-size: 1em;
+  }
+  textarea {
+    resize: vertical;
+    height: 80px;
+  }
+  button {
+    padding: 14px 30px;
+    margin: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #00c6ff;
+    color: #000;
+    transition: 0.3s;
+  }
+  button:hover {
+    background: #0072ff;
+    color: #fff;
+  }
+  .infoText {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+  }
+  .camera-permission {
+    margin-top: 30px;
+    font-size: 1em;
+    color: #aaa;
+  }
+</style>
 </head>
 <body>
 
-<h1>QR Code Scanner</h1>
-<p>Scan QR → auto-save → continue scanning</p>
+<h1>QR Scanner</h1>
+<p>Scan a QR code to capture attendee info.</p>
 
 <div id="reader"></div>
-<div id="status">Waiting for scan...</div>
+
+<div id="formBox">
+  <div class="infoText" id="infoText"></div>
+  <input type="email" id="emailInput" placeholder="Email (optional)">
+  <textarea id="notesInput" placeholder="Notes (optional)"></textarea>
+  <br>
+  <button onclick="addToSheet()">Add to Google Sheet</button>
+  <button onclick="backToScanner()">Back to Scan</button>
+</div>
 
 <script>
 let lastScan = null;
+let currentData = null;
+let cameraPermissionGranted = false;
 
 function parseQRData(qrText) {
   try {
-    let decoded = qrText;
+    let decoded = qrText.trim();
+    const parts = decoded.split("$");
+    if (parts.length < 5) return null;
 
-    // Decode repeatedly (handles double encoding safely)
-    for (let i = 0; i < 2; i++) {
-      decoded = decodeURIComponent(decoded);
-    }
-
-    // Remove leading ?
-    if (decoded.startsWith("?")) {
-      decoded = decoded.substring(1);
-    }
-
-    console.log("Decoded QR:", decoded); // 🔍 debug
-
-    const params = new URLSearchParams(decoded);
-
-    const fname = params.get("fname");
-    const lname = params.get("lname");
-    const cname = params.get("cname");
-
-    if (!fname || !lname) return null;
-
-    const name = (fname + " " + lname).trim();
+    const fname = parts[2];
+    const lname = parts[3];
+    const cname = parts[4];
 
     return {
-      name: name,
-      company: cname || ""
+      name: (fname + " " + lname).trim(),
+      company: cname
     };
-
-  } catch (err) {
-    console.error("Parsing error:", err);
+  } catch {
     return null;
   }
 }
@@ -62,34 +115,55 @@ function onScanSuccess(decodedText) {
   if (decodedText === lastScan) return;
   lastScan = decodedText;
 
-  document.getElementById("status").innerText = "Processing...";
-
   const parsed = parseQRData(decodedText);
 
-  if (!parsed || !parsed.name) {
-    document.getElementById("status").innerText = "❌ Invalid QR format";
-    return;
+  currentData = parsed || {
+    name: "",
+    company: "",
+    email: "",
+    notes: ""
+  };
+
+  showForm(parsed !== null);
+}
+
+function showForm(success) {
+  html5QrcodeScanner.clear();
+
+  const form = document.getElementById("formBox");
+  const info = document.getElementById("infoText");
+  form.style.display = "block";
+
+  if (success) {
+    info.innerHTML = `<b>${currentData.name}</b><br>Company: ${currentData.company}`;
+    document.getElementById("emailInput").value = "";
+    document.getElementById("notesInput").value = "";
+  } else {
+    info.innerHTML = `Scan failed. Enter details manually.`;
+    document.getElementById("emailInput").value = currentData.email || "";
+    document.getElementById("notesInput").value = currentData.notes || "";
   }
+}
 
-  const { name, company } = parsed;
+function addToSheet() {
+  const email = document.getElementById("emailInput").value || "";
+  const notes = document.getElementById("notesInput").value || "";
 
-  // Send to Google Sheet
-  fetch("https://script.google.com/macros/s/AKfycbxoKVWgxOvt6N73Aeq752LQZbYLjUwPZ1dBi-sPZhHBgX-PtuCKBaafCzem8tAmyC1ENg/exec?name=" 
-        + encodeURIComponent(name) 
-        + "&company=" + encodeURIComponent(company))
-    .then(() => {
-      document.getElementById("status").innerText = "✅ Saved: " + name;
+  fetch("https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec?name="
+    + encodeURIComponent(currentData.name)
+    + "&company=" + encodeURIComponent(currentData.company)
+    + "&email=" + encodeURIComponent(email)
+    + "&notes=" + encodeURIComponent(notes))
+    .then(() => alert("Name Added"))
+    .then(() => backToScanner())
+    .catch(err => alert("Error saving: " + err));
+}
 
-      // Reset after short delay for next scan
-      setTimeout(() => {
-        document.getElementById("status").innerText = "Waiting for scan...";
-        lastScan = null;
-      }, 1500);
-    })
-    .catch(err => {
-      console.error(err);
-      document.getElementById("status").innerText = "❌ Error saving";
-    });
+function backToScanner() {
+  document.getElementById("formBox").style.display = "none";
+  lastScan = null;
+  currentData = null;
+  html5QrcodeScanner.render(onScanSuccess);
 }
 
 var html5QrcodeScanner = new Html5QrcodeScanner(
@@ -98,7 +172,17 @@ var html5QrcodeScanner = new Html5QrcodeScanner(
   false
 );
 
-html5QrcodeScanner.render(onScanSuccess);
+// Request camera permission once
+Html5Qrcode.getCameras().then(cameras => {
+  if (cameras && cameras.length) {
+    cameraPermissionGranted = true;
+    html5QrcodeScanner.render(onScanSuccess);
+  } else {
+    alert("No camera found or permission denied.");
+  }
+}).catch(err => {
+  alert("Camera access required.");
+});
 </script>
 
 </body>
