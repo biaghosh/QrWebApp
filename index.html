@@ -23,23 +23,35 @@ let lastScan = null;
 
 function parseQRData(qrText) {
   try {
-    // Decode URL encoding
-    let decoded = decodeURIComponent(qrText);
+    let decoded = qrText;
 
-    // Remove leading ? if present
+    // Decode repeatedly (handles double encoding safely)
+    for (let i = 0; i < 2; i++) {
+      decoded = decodeURIComponent(decoded);
+    }
+
+    // Remove leading ?
     if (decoded.startsWith("?")) {
       decoded = decoded.substring(1);
     }
 
+    console.log("Decoded QR:", decoded); // 🔍 debug
+
     const params = new URLSearchParams(decoded);
 
-    const fname = params.get("fname") || "";
-    const lname = params.get("lname") || "";
-    const cname = params.get("cname") || "";
+    const fname = params.get("fname");
+    const lname = params.get("lname");
+    const cname = params.get("cname");
+
+    if (!fname || !lname) return null;
 
     const name = (fname + " " + lname).trim();
 
-    return { name, company: cname };
+    return {
+      name: name,
+      company: cname || ""
+    };
+
   } catch (err) {
     console.error("Parsing error:", err);
     return null;
