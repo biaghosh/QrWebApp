@@ -10,12 +10,14 @@
     background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
     color: #fff;
     text-align: center;
-    padding: 40px 20px;
+    padding: 20px;
     min-height: 100vh;
+    margin: 0;
   }
   h1 { font-size: 2em; margin-bottom: 10px; }
   #reader {
-    width: 320px;
+    width: 90%;
+    max-width: 400px;
     margin: 20px auto;
     border: 2px solid #fff;
     border-radius: 12px;
@@ -28,20 +30,25 @@
     background-color: rgba(255,255,255,0.1);
     padding: 20px;
     border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
   }
   input, textarea {
     padding: 12px;
-    width: 90%;
+    width: 100%;
     margin: 10px 0;
     border-radius: 8px;
     border: none;
     font-size: 1em;
+    box-sizing: border-box;
   }
   textarea { resize: vertical; height: 80px; }
   button {
-    padding: 14px 30px;
-    margin: 10px;
-    font-size: 1.1em;
+    padding: 14px 20px;
+    margin: 10px 5px;
+    font-size: 1em;
     font-weight: bold;
     border: none;
     border-radius: 10px;
@@ -49,12 +56,16 @@
     background: #00c6ff;
     color: #000;
     transition: 0.3s;
+    width: 45%;
+    max-width: 200px;
   }
-  button:hover {
-    background: #0072ff;
-    color: #fff;
+  button:hover { background: #0072ff; color: #fff; }
+  .infoText { font-size: 1.1em; margin-bottom: 15px; }
+  @media (max-width: 480px) {
+    h1 { font-size: 1.5em; }
+    button { width: 100%; margin: 8px 0; }
+    #reader { padding: 5px; }
   }
-  .infoText { font-size: 1.2em; margin-bottom: 15px; }
 </style>
 </head>
 <body>
@@ -80,7 +91,6 @@ let currentData = null;
 // Replace with your Apps Script deployed URL
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbwQR8sbOyDF2Jstr3Y6hv5mZxC8q_7CzoRdf0ns9stIPI9JCsPcldPJbZHYsH0dI0aTEQ/exec";
 
-// Parse your QR format: 203416$AAIS0525$ZHICHAO$FAN$UCONN HEALTH
 function parseQRData(qrText) {
   const parts = qrText.trim().split("$");
   if (parts.length < 5) return null;
@@ -91,18 +101,16 @@ function parseQRData(qrText) {
 }
 
 function onScanSuccess(decodedText) {
-  if (decodedText === lastScan) return; // avoid duplicates
+  if (decodedText === lastScan) return;
   lastScan = decodedText;
 
   const parsed = parseQRData(decodedText);
-
   currentData = parsed || { name: "", company: "", email: "", notes: "" };
   showForm(parsed !== null);
 }
 
 function showForm(success) {
   html5QrcodeScanner.clear();
-
   const form = document.getElementById("formBox");
   const info = document.getElementById("infoText");
   form.style.display = "block";
@@ -124,7 +132,7 @@ async function addToSheet() {
 
   try {
     const response = await fetch(`${SHEET_URL}?name=${encodeURIComponent(currentData.name)}&company=${encodeURIComponent(currentData.company)}&email=${encodeURIComponent(email)}&notes=${encodeURIComponent(notes)}`);
-    const text = await response.text();
+    await response.text();
     alert("Name Added!");
     backToScanner();
   } catch (err) {
@@ -139,19 +147,14 @@ function backToScanner() {
   html5QrcodeScanner.render(onScanSuccess);
 }
 
-// Buttons
 document.getElementById("addButton").addEventListener("click", addToSheet);
 document.getElementById("backButton").addEventListener("click", backToScanner);
 
-// Initialize scanner
 var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
 
 Html5Qrcode.getCameras().then(cameras => {
-  if (cameras && cameras.length) {
-    html5QrcodeScanner.render(onScanSuccess);
-  } else {
-    alert("No camera found or permission denied.");
-  }
+  if (cameras && cameras.length) html5QrcodeScanner.render(onScanSuccess);
+  else alert("No camera found or permission denied.");
 }).catch(err => alert("Camera access required."));
 </script>
 
