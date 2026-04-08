@@ -7,58 +7,83 @@
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
     #reader { width: 300px; margin: auto; }
-    #result { margin-top: 20px; font-weight: bold; color: green; }
+    #status { margin-top: 15px; font-weight: bold; }
   </style>
 </head>
 <body>
 
 <h1>QR Code Scanner</h1>
-<p>Scan a QR code to capture name and email.</p>
+<p>Scan QR → auto-save → continue scanning</p>
 
 <div id="reader"></div>
-<div id="result">Waiting for scan...</div>
+<div id="status">Waiting for scan...</div>
 
 <script>
 let lastScan = null;
 
-function onScanSuccess(decodedText, decodedResult) {
-  // Prevent duplicate scans
+function parseQRData(qrText) {
+  try {
+    // Decode URL encoding
+    let decoded = decodeURIComponent(qrText);
+
+    // Remove leading ? if present
+    if (decoded.startsWith("?")) {
+      decoded = decoded.substring(1);
+    }
+
+    const params = new URLSearchParams(decoded);
+
+    const fname = params.get("fname") || "";
+    const lname = params.get("lname") || "";
+    const cname = params.get("cname") || "";
+
+    const name = (fname + " " + lname).trim();
+
+    return { name, company: cname };
+  } catch (err) {
+    console.error("Parsing error:", err);
+    return null;
+  }
+}
+
+function onScanSuccess(decodedText) {
   if (decodedText === lastScan) return;
   lastScan = decodedText;
 
-  console.log("QR Code scanned:", decodedText);
+  document.getElementById("status").innerText = "Processing...";
 
-  // Show scanned text on page
-  document.getElementById("result").innerText = "Scanned: " + decodedText;
+  const parsed = parseQRData(decodedText);
 
-  // Extract Name and Email
-  const parts = decodedText.split(",");
-  if (parts.length < 2) {
-    document.getElementById("result").innerText += " ❌ Invalid format";
+  if (!parsed || !parsed.name) {
+    document.getElementById("status").innerText = "❌ Invalid QR format";
     return;
   }
 
-  const name = parts[0].trim();
-  const email = parts[1].trim();
+  const { name, company } = parsed;
 
   // Send to Google Sheet
   fetch("https://script.google.com/macros/s/AKfycbxoKVWgxOvt6N73Aeq752LQZbYLjUwPZ1dBi-sPZhHBgX-PtuCKBaafCzem8tAmyC1ENg/exec?name=" 
         + encodeURIComponent(name) 
-        + "&email=" + encodeURIComponent(email))
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById("result").innerText += " ✅ Saved";
+        + "&company=" + encodeURIComponent(company))
+    .then(() => {
+      document.getElementById("status").innerText = "✅ Saved: " + name;
+
+      // Reset after short delay for next scan
+      setTimeout(() => {
+        document.getElementById("status").innerText = "Waiting for scan...";
+        lastScan = null;
+      }, 1500);
     })
     .catch(err => {
-      document.getElementById("result").innerText += " ❌ Error";
       console.error(err);
+      document.getElementById("status").innerText = "❌ Error saving";
     });
 }
 
 var html5QrcodeScanner = new Html5QrcodeScanner(
   "reader",
   { fps: 10, qrbox: 250 },
-  false // 🔥 disables verbose logs / default alerts
+  false
 );
 
 html5QrcodeScanner.render(onScanSuccess);
