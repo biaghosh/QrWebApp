@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Code Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    #reader { width: 300px; margin: auto; }
+  </style>
+</head>
+<body>
+
+<h1>QR Code Scanner</h1>
+<p>Scan a QR code to capture name and email.</p>
+
+<div id="reader"></div>
+
+<script>
+function onScanSuccess(decodedText, decodedResult) {
+  console.log(`QR Code scanned: ${decodedText}`);
+  alert(`Scanned: ${decodedText}`);
+  // We'll send this to Google Sheets in the next step
+}
+
+var html5QrcodeScanner = new Html5QrcodeScanner(
+  "reader", { fps: 10, qrbox: 250 });
+html5QrcodeScanner.render(onScanSuccess);
+</script>
+
+</body>
+</html>
