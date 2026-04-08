@@ -3,52 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <title>QR Scanner - BioInVision</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-  body {
+  html, body {
+    margin: 0;
+    padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
     color: #fff;
     text-align: center;
-    padding: 20px;
     min-height: 100vh;
-    margin: 0;
+    touch-action: pan-x pan-y pinch-zoom;
+    overflow-x: hidden;
   }
-  h1 { font-size: 2em; margin-bottom: 10px; }
+
+  h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+  }
+
   #reader {
-    width: 90%;
+    width: 90vw;
     max-width: 400px;
+    height: 90vw;
+    max-height: 400px;
     margin: 20px auto;
     border: 2px solid #fff;
     border-radius: 12px;
-    padding: 10px;
     background-color: rgba(255,255,255,0.05);
   }
+
   #formBox {
     display: none;
-    margin-top: 30px;
-    background-color: rgba(255,255,255,0.1);
+    margin-top: 20px;
+    background-color: rgba(255,255,255,0.05);
     padding: 20px;
     border-radius: 12px;
     width: 90%;
     max-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
+    transform-origin: center center;
   }
+
   input, textarea {
     padding: 12px;
-    width: 100%;
+    width: 95%;
     margin: 10px 0;
     border-radius: 8px;
     border: none;
     font-size: 1em;
-    box-sizing: border-box;
   }
-  textarea { resize: vertical; height: 80px; }
+
+  textarea {
+    resize: vertical;
+    height: 80px;
+  }
+
   button {
-    padding: 14px 20px;
-    margin: 10px 5px;
-    font-size: 1em;
+    padding: 14px 30px;
+    margin: 10px;
+    font-size: 1.1em;
     font-weight: bold;
     border: none;
     border-radius: 10px;
@@ -56,15 +70,23 @@
     background: #00c6ff;
     color: #000;
     transition: 0.3s;
-    width: 45%;
-    max-width: 200px;
   }
-  button:hover { background: #0072ff; color: #fff; }
-  .infoText { font-size: 1.1em; margin-bottom: 15px; }
-  @media (max-width: 480px) {
-    h1 { font-size: 1.5em; }
-    button { width: 100%; margin: 8px 0; }
-    #reader { padding: 5px; }
+
+  button:hover {
+    background: #0072ff;
+    color: #fff;
+  }
+
+  .infoText {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    word-break: break-word;
+  }
+
+  .camera-permission {
+    margin-top: 20px;
+    font-size: 1em;
+    color: #aaa;
   }
 </style>
 </head>
@@ -80,24 +102,31 @@
   <input type="email" id="emailInput" placeholder="Email (optional)">
   <textarea id="notesInput" placeholder="Notes (optional)"></textarea>
   <br>
-  <button id="addButton">Add to Google Sheet</button>
-  <button id="backButton">Back to Scan</button>
+  <button onclick="addToSheet()">Add to Google Sheet</button>
+  <button onclick="backToScanner()">Back to Scan</button>
 </div>
 
 <script>
 let lastScan = null;
 let currentData = null;
 
-// Replace with your Apps Script deployed URL
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbwQR8sbOyDF2Jstr3Y6hv5mZxC8q_7CzoRdf0ns9stIPI9JCsPcldPJbZHYsH0dI0aTEQ/exec";
-
 function parseQRData(qrText) {
-  const parts = qrText.trim().split("$");
-  if (parts.length < 5) return null;
-  return {
-    name: `${parts[2]} ${parts[3]}`,
-    company: parts[4]
-  };
+  try {
+    let decoded = qrText.trim();
+    const parts = decoded.split("$");
+    if (parts.length < 5) return null;
+
+    const fname = parts[2];
+    const lname = parts[3];
+    const cname = parts[4];
+
+    return {
+      name: (fname + " " + lname).trim(),
+      company: cname
+    };
+  } catch {
+    return null;
+  }
 }
 
 function onScanSuccess(decodedText) {
@@ -105,12 +134,20 @@ function onScanSuccess(decodedText) {
   lastScan = decodedText;
 
   const parsed = parseQRData(decodedText);
-  currentData = parsed || { name: "", company: "", email: "", notes: "" };
+
+  currentData = parsed || {
+    name: "",
+    company: "",
+    email: "",
+    notes: ""
+  };
+
   showForm(parsed !== null);
 }
 
 function showForm(success) {
   html5QrcodeScanner.clear();
+
   const form = document.getElementById("formBox");
   const info = document.getElementById("infoText");
   form.style.display = "block";
@@ -120,24 +157,24 @@ function showForm(success) {
     document.getElementById("emailInput").value = "";
     document.getElementById("notesInput").value = "";
   } else {
-    info.innerHTML = "Scan failed. Enter details manually.";
+    info.innerHTML = `Scan failed. Enter details manually.`;
     document.getElementById("emailInput").value = currentData.email || "";
     document.getElementById("notesInput").value = currentData.notes || "";
   }
 }
 
-async function addToSheet() {
+function addToSheet() {
   const email = document.getElementById("emailInput").value || "";
   const notes = document.getElementById("notesInput").value || "";
 
-  try {
-    const response = await fetch(`${SHEET_URL}?name=${encodeURIComponent(currentData.name)}&company=${encodeURIComponent(currentData.company)}&email=${encodeURIComponent(email)}&notes=${encodeURIComponent(notes)}`);
-    await response.text();
-    alert("Name Added!");
-    backToScanner();
-  } catch (err) {
-    alert("Error saving: " + err);
-  }
+  fetch("https://script.google.com/macros/s/AKfycbwQR8sbOyDF2Jstr3Y6hv5mZxC8q_7CzoRdf0ns9stIPI9JCsPcldPJbZHYsH0dI0aTEQ/exec?name="
+    + encodeURIComponent(currentData.name)
+    + "&company=" + encodeURIComponent(currentData.company)
+    + "&email=" + encodeURIComponent(email)
+    + "&notes=" + encodeURIComponent(notes))
+    .then(() => alert("Name Added"))
+    .then(() => backToScanner())
+    .catch(err => alert("Error saving: " + err));
 }
 
 function backToScanner() {
@@ -147,15 +184,22 @@ function backToScanner() {
   html5QrcodeScanner.render(onScanSuccess);
 }
 
-document.getElementById("addButton").addEventListener("click", addToSheet);
-document.getElementById("backButton").addEventListener("click", backToScanner);
+var html5QrcodeScanner = new Html5QrcodeScanner(
+  "reader",
+  { fps: 10, qrbox: 250 },
+  false
+);
 
-var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
-
+// Request camera permission once
 Html5Qrcode.getCameras().then(cameras => {
-  if (cameras && cameras.length) html5QrcodeScanner.render(onScanSuccess);
-  else alert("No camera found or permission denied.");
-}).catch(err => alert("Camera access required."));
+  if (cameras && cameras.length) {
+    html5QrcodeScanner.render(onScanSuccess);
+  } else {
+    alert("No camera found or permission denied.");
+  }
+}).catch(err => {
+  alert("Camera access required.");
+});
 </script>
 
 </body>
