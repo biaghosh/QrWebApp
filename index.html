@@ -246,7 +246,7 @@ function showForm(success) {
 }
 
 // ---------- SAVE ----------
-async function addToSheet() {
+function addToSheet() {
   const name    = document.getElementById("nameInput").value.trim() || "";
   const company = document.getElementById("companyInput").value.trim() || "";
   const email   = document.getElementById("emailInput").value.trim() || "";
@@ -257,33 +257,25 @@ async function addToSheet() {
     return;
   }
 
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbwHkd_mtg1VZ-_BMfGHKcyLUMPIl6PJiLnLJWmZh8GWpAmQaDmF9seybbv73gyy0c3oVA/exec";  // ← your current URL
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbzbeijk3L2fofiVWYbvcR1sdKSWSR97U13XfZJkxcI_XfJBhlm32Ir_04r3Tuo6GemkRA/exec";
 
-  // Create a hidden form and submit it (bypasses CORS issues)
   const form = document.createElement("form");
   form.method = "POST";
   form.action = scriptUrl;
   form.style.display = "none";
 
-  // Add all fields
   const fields = { name, company, email, notes, image: currentData && currentData.image ? currentData.image : "" };
-  
-  for (let key in fields) {
+
+  Object.keys(fields).forEach(key => {
     const input = document.createElement("input");
     input.type = "hidden";
     input.name = key;
     input.value = fields[key];
     form.appendChild(input);
-  }
+  });
 
   document.body.appendChild(form);
-  form.submit();   // This triggers the POST
-
-  // Optional: Show success after a short delay (form navigation will happen)
-  setTimeout(() => {
-    alert("✅ Data sent to Google Sheet!");
-    backToHome();
-  }, 800);
+  form.submit();   // This will navigate to the success/error page from doPost
 }
 
 function backToHome() {
