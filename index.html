@@ -5,104 +5,85 @@
 <title>QR Scanner - BioInVision</title>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
 <style>
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
     color: #fff;
     text-align: center;
     padding: 40px 20px;
-    min-height: 100vh;
   }
-  h1 {
-    font-size: 2em;
-    margin-bottom: 10px;
-  }
+
   .btn {
     padding: 20px 40px;
     font-size: 1.5em;
-    font-weight: bold;
-    border: none;
     border-radius: 12px;
-    cursor: pointer;
     background: #00c6ff;
-    color: #000;
-    transition: 0.3s;
-    margin-top: 50px;
+    border: none;
+    margin-top: 30px;
   }
-  .btn:hover {
-    background: #0072ff;
-    color: #fff;
-  }
+
   #reader {
     width: 320px;
     margin: 20px auto;
     border: 2px solid #fff;
     border-radius: 12px;
-    padding: 10px;
-    background-color: rgba(255,255,255,0.05);
   }
+
   #formBox {
     display: none;
-    margin-top: 30px;
-    background-color: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 12px;
+    margin-top: 20px;
   }
+
+  #imagePreview img {
+    width: 220px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #fff;
+  }
+
   input, textarea {
-    padding: 12px;
     width: 90%;
-    margin: 10px 0;
+    padding: 10px;
+    margin: 10px;
     border-radius: 8px;
     border: none;
-    font-size: 1em;
   }
-  textarea {
-    resize: vertical;
-    height: 80px;
-  }
+
   button {
-    padding: 14px 30px;
+    padding: 12px 20px;
     margin: 10px;
-    font-size: 1.1em;
-    font-weight: bold;
-    border: none;
     border-radius: 10px;
-    cursor: pointer;
+    border: none;
     background: #00c6ff;
-    color: #000;
-    transition: 0.3s;
   }
-  button:hover {
-    background: #0072ff;
-    color: #fff;
-  }
-  .infoText {
-    font-size: 1.2em;
-    margin-bottom: 15px;
-  }
+
   #homePage, #scanPage {
     display: none;
   }
 </style>
 </head>
+
 <body>
 
 <div id="homePage">
   <h1>QR Scanner</h1>
-  <p>Capture attendee info with a QR code scan.</p>
   <button class="btn" onclick="startScan()">Scan</button>
   <button class="btn" onclick="capturePhoto()">📸 Capture Badge</button>
 </div>
 
 <div id="scanPage">
-  <h1>Scanning...</h1>
+  <h2>Scanning...</h2>
   <div id="reader"></div>
 
   <div id="formBox">
-    <div class="infoText" id="infoText"></div>
-    <input type="email" id="emailInput" placeholder="Email (optional)">
-    <textarea id="notesInput" placeholder="Notes (optional)"></textarea>
+    <div id="imagePreview"></div>
+    <div id="infoText"></div>
+  
+    <input type="email" id="emailInput" placeholder="Email">
+    <textarea id="notesInput" placeholder="Notes"></textarea>
+  
     <br>
     <button onclick="addToSheet()">Add to Google Sheet</button>
     <button onclick="backToHome()">Cancel</button>
@@ -114,6 +95,7 @@ let lastScan = null;
 let currentData = null;
 let html5QrcodeScanner = null;
 
+// ---------- NAVIGATION ----------
 function showHome() {
   document.getElementById("homePage").style.display = "block";
   document.getElementById("scanPage").style.display = "none";
@@ -127,26 +109,65 @@ function startScan() {
   currentData = null;
 
   if (!html5QrcodeScanner) {
-    html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", { fps: 10, qrbox: 250 }, false
-    );
-
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        html5QrcodeScanner.render(onScanSuccess);
-      } else {
-        alert("No camera found or permission denied.");
-      }
-    }).catch(err => {
-      alert("Camera access required.");
-    });
-  } else {
-    html5QrcodeScanner.render(onScanSuccess);
+    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
   }
+
+  html5QrcodeScanner.render(onScanSuccess);
 }
 
+// ---------- IMAGE COMPRESSION ----------
+function resizeAndCompressImage(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = e => img.src = e.target.result;
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const MAX_WIDTH = 900;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > MAX_WIDTH) {
+        const scale = MAX_WIDTH / width;
+        width = MAX_WIDTH;
+        height *= scale;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+
+      resolve({
+        base64: dataUrl.split(",")[1],
+        blob: dataURLtoBlob(dataUrl)
+      });
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function dataURLtoBlob(dataURL) {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  const u8arr = new Uint8Array(bstr.length);
+
+  for (let i = 0; i < bstr.length; i++) {
+    u8arr[i] = bstr.charCodeAt(i);
+  }
+
+  return new Blob([u8arr], { type: mime });
+}
+
+// ---------- CAPTURE PHOTO ----------
 async function capturePhoto() {
-  // 🔥 Switch to scan page FIRST
   document.getElementById("homePage").style.display = "none";
   document.getElementById("scanPage").style.display = "block";
 
@@ -159,32 +180,44 @@ async function capturePhoto() {
     const file = event.target.files[0];
     if (!file) return;
 
-    const base64 = await toBase64(file);
+    const processed = await resizeAndCompressImage(file);
+    const base64 = processed.base64;
 
     const html5Qr = new Html5Qrcode("reader");
 
+    let completed = false;
+
+    const timeout = setTimeout(() => {
+      if (!completed) {
+        console.log("Timeout → fallback");
+        currentData = { name: "", company: "", image: base64 };
+        showForm(false);
+      }
+    }, 2000);
+
     try {
-      const result = await html5Qr.scanFile(file, true);
+      const result = await html5Qr.scanFile(
+        new File([processed.blob], "resized.jpg", { type: "image/jpeg" }),
+        true
+      );
+
+      completed = true;
+      clearTimeout(timeout);
 
       const parsed = parseQRData(result);
 
-      currentData = parsed || {
-        name: "",
-        company: ""
-      };
-
+      currentData = parsed || { name: "", company: "" };
       currentData.image = base64;
 
       showForm(parsed !== null);
 
     } catch (err) {
-      // fallback
-      currentData = {
-        name: "",
-        company: "",
-        image: base64
-      };
+      completed = true;
+      clearTimeout(timeout);
 
+      console.log("Scan failed:", err);
+
+      currentData = { name: "", company: "", image: base64 };
       showForm(false);
     }
   };
@@ -192,52 +225,57 @@ async function capturePhoto() {
   input.click();
 }
 
-function toBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      resolve(reader.result.split(",")[1]); // remove prefix
-    };
-    reader.onerror = error => reject(error);
-  });
-}
-
+// ---------- QR PARSE ----------
 function parseQRData(qrText) {
   const parts = qrText.trim().split("$");
   if (parts.length < 5) return null;
   return {
-    name: (parts[2] + " " + parts[3]).trim(),
+    name: parts[2] + " " + parts[3],
     company: parts[4]
   };
 }
 
+// ---------- LIVE SCAN ----------
 function onScanSuccess(decodedText) {
   if (decodedText === lastScan) return;
   lastScan = decodedText;
 
   const parsed = parseQRData(decodedText);
-  currentData = parsed || { name: "", company: "", email: "", notes: "" };
+  currentData = parsed || { name: "", company: "" };
+
   showForm(parsed !== null);
 }
 
+// ---------- FORM ----------
 function showForm(success) {
-  html5QrcodeScanner.clear();
+  if (html5QrcodeScanner) {
+    try { html5QrcodeScanner.clear(); } catch {}
+  }
+
   const form = document.getElementById("formBox");
   const info = document.getElementById("infoText");
+  const preview = document.getElementById("imagePreview");
+
   form.style.display = "block";
 
-  if (success) {
-    info.innerHTML = `<b>${currentData.name}</b><br>Company: ${currentData.company}`;
-    document.getElementById("emailInput").value = "";
-    document.getElementById("notesInput").value = "";
+  // 🔥 Show image if available
+  if (currentData.image) {
+    preview.innerHTML = `<img src="data:image/jpeg;base64,${currentData.image}" />`;
   } else {
-    info.innerHTML = "Scan failed. Enter details manually.";
-    document.getElementById("emailInput").value = currentData.email || "";
-    document.getElementById("notesInput").value = currentData.notes || "";
+    preview.innerHTML = "";
   }
+
+  if (success) {
+    info.innerHTML = `<b>${currentData.name}</b><br>${currentData.company}`;
+  } else {
+    info.innerHTML = "Scan failed. Enter manually.";
+  }
+
+  document.getElementById("emailInput").value = "";
+  document.getElementById("notesInput").value = "";
 }
 
+// ---------- SAVE ----------
 async function addToSheet() {
   const email = document.getElementById("emailInput").value || "";
   const notes = document.getElementById("notesInput").value || "";
@@ -249,17 +287,13 @@ async function addToSheet() {
   formData.append("notes", notes);
   formData.append("image", currentData.image || "");
 
-  try {
-    await fetch("https://script.google.com/macros/s/AKfycbxoKVWgxOvt6N73Aeq752LQZbYLjUwPZ1dBi-sPZhHBgX-PtuCKBaafCzem8tAmyC1ENg/exec", {
-      method: "POST",
-      body: formData
-    });
+  await fetch("https://script.google.com/macros/s/AKfycbxoKVWgxOvt6N73Aeq752LQZbYLjUwPZ1dBi-sPZhHBgX-PtuCKBaafCzem8tAmyC1ENg/exec", {
+    method: "POST",
+    body: formData
+  });
 
-    alert("Name Added!");
-    backToHome();
-  } catch (err) {
-    alert("Error saving: " + err);
-  }
+  alert("Saved!");
+  backToHome();
 }
 
 function backToHome() {
@@ -267,8 +301,9 @@ function backToHome() {
   showHome();
 }
 
-// Initial page
+// ---------- INIT ----------
 showHome();
+
 </script>
 
 </body>
