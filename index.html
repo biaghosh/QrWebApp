@@ -1,60 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>QR Scanner - BioInVision</title>
-<script src="https://unpkg.com/html5-qrcode"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
-    color: #fff;
-    text-align: center;
-    padding: 40px 20px;
-  }
-  .btn {
-    padding: 20px 40px;
-    font-size: 1.5em;
-    border-radius: 12px;
-    background: #00c6ff;
-    border: none;
-    margin-top: 30px;
-  }
-  #reader {
-    width: 320px;
-    margin: 20px auto;
-    border: 2px solid #fff;
-    border-radius: 12px;
-  }
-  #formBox {
-    display: none;
-    margin-top: 20px;
-  }
-  #imagePreview img {
-    width: 220px;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    border: 2px solid #fff;
-  }
-  input, textarea {
-    width: 90%;
-    padding: 10px;
-    margin: 10px;
-    border-radius: 8px;
-    border: none;
-  }
-  button {
-    padding: 12px 20px;
-    margin: 10px;
-    border-radius: 10px;
-    border: none;
-    background: #00c6ff;
-  }
-  #homePage, #scanPage {
-    display: none;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>QR Scanner - BioInVision</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  
+  <!-- Improved viewport for iPhone -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      min-height: 100dvh;           /* Better than 100vh on mobile */
+      padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom) 20px;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    h1, h2 {
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .btn {
+      display: inline-block;
+      width: 90%;
+      max-width: 320px;
+      padding: 18px 30px;
+      font-size: 1.4em;
+      font-weight: 600;
+      border-radius: 16px;
+      background: #00c6ff;
+      color: #fff;
+      border: none;
+      margin: 15px auto;
+      box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+      background: #00a8d9;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 340px;
+      margin: 20px auto;
+      border: 3px solid #00c6ff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    #formBox {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    #imagePreview img {
+      width: 100%;
+      max-width: 260px;
+      border-radius: 16px;
+      margin: 15px auto;
+      border: 3px solid #fff;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      display: block;
+    }
+
+    input, textarea {
+      width: 100%;
+      max-width: 340px;
+      padding: 14px 16px;
+      margin: 10px auto;
+      border-radius: 12px;
+      border: none;
+      font-size: 1.05em;
+      background: rgba(255,255,255,0.95);
+      color: #111;
+      display: block;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px 20px;
+      margin: 12px auto;
+      border-radius: 14px;
+      border: none;
+      font-size: 1.15em;
+      font-weight: 600;
+      background: #00c6ff;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 198, 255, 0.4);
+    }
+
+    button:active {
+      background: #00a8d9;
+      transform: scale(0.98);
+    }
+
+    #infoText {
+      margin: 15px 0;
+      font-size: 1.1em;
+      line-height: 1.4;
+    }
+
+    /* Success/Error Page Improvements */
+    .success-page {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .success-page a {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 16px 32px;
+      background: #00c6ff;
+      color: white;
+      text-decoration: none;
+      border-radius: 14px;
+      font-size: 1.25em;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
+    }
+
+    .success-page a:active {
+      background: #00a8d9;
+    }
+
+    /* Small screen tweaks */
+    @media (max-width: 480px) {
+      body {
+        padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
+      }
+      .btn, button {
+        font-size: 1.25em;
+        padding: 16px 24px;
+      }
+      input, textarea {
+        font-size: 1.05em;
+      }
+    }
+  </style>
 </head>
 <body>
 <div id="homePage">
@@ -257,7 +365,7 @@ function addToSheet() {
     return;
   }
 
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbxSu0thRDYmLepHf9s_bllpOyWUOr74345v2TcgDTMCeGb4k4-kpCA1OqAjRJBJyyA8/exec";
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbw8NYZcqN8AwTqKYeurxBellIOqcVpzy2SL_w0FUw1HTbD4vQ8XcYn5jC01ufFWDiw_JQ/exec";
 
   const form = document.createElement("form");
   form.method = "POST";
