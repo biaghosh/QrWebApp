@@ -92,6 +92,7 @@
   <h1>QR Scanner</h1>
   <p>Capture attendee info with a QR code scan.</p>
   <button class="btn" onclick="startScan()">Scan</button>
+  <button class="btn" onclick="capturePhoto()">📸 Capture Badge</button>
 </div>
 
 <div id="scanPage">
@@ -144,6 +145,61 @@ function startScan() {
   }
 }
 
+async function capturePhoto() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.capture = "environment";
+
+  input.onchange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Convert to base64
+    const base64 = await toBase64(file);
+
+    // Scan QR from image
+    const html5Qr = new Html5Qrcode("reader");
+    try {
+      const result = await html5Qr.scanFile(file, true);
+
+      const parsed = parseQRData(result);
+
+      currentData = parsed || {
+        name: "",
+        company: ""
+      };
+
+      currentData.image = base64;
+
+      showForm(parsed !== null);
+
+    } catch (err) {
+      // Failed scan → manual entry
+      currentData = {
+        name: "",
+        company: "",
+        image: base64
+      };
+
+      showForm(false);
+    }
+  };
+
+  input.click();
+}
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      resolve(reader.result.split(",")[1]); // remove prefix
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
 function parseQRData(qrText) {
   const parts = qrText.trim().split("$");
   if (parts.length < 5) return null;
@@ -179,18 +235,28 @@ function showForm(success) {
   }
 }
 
-function addToSheet() {
+async function addToSheet() {
   const email = document.getElementById("emailInput").value || "";
   const notes = document.getElementById("notesInput").value || "";
 
-  fetch("https://script.google.com/macros/s/AKfycbxt-VpLaLiOS6cxPl96GzvCQ3W5oKnWvd7NMwjqCvfJ7qukrO2EUJiaGqRVzcAYwaIPYQ/exec?name="
-    + encodeURIComponent(currentData.name)
-    + "&company=" + encodeURIComponent(currentData.company)
-    + "&email=" + encodeURIComponent(email)
-    + "&notes=" + encodeURIComponent(notes))
-    .then(() => alert("Name Added"))
-    .then(() => backToHome())
-    .catch(err => alert("Error saving: " + err));
+  const formData = new URLSearchParams();
+  formData.append("name", currentData.name);
+  formData.append("company", currentData.company);
+  formData.append("email", email);
+  formData.append("notes", notes);
+  formData.append("image", currentData.image || "");
+
+  try {
+    await fetch("https://script.google.com/macros/s/AKfycbxoKVWgxOvt6N73Aeq752LQZbYLjUwPZ1dBi-sPZhHBgX-PtuCKBaafCzem8tAmyC1ENg/exec", {
+      method: "POST",
+      body: formData
+    });
+
+    alert("Name Added!");
+    backToHome();
+  } catch (err) {
+    alert("Error saving: " + err);
+  }
 }
 
 function backToHome() {
