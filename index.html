@@ -59,8 +59,8 @@
 <body>
 <div id="homePage">
   <h1>QR Scanner</h1>
-  <button class="btn" onclick="startScan()">Scan (Live Camera)</button>
-  <button class="btn" onclick="capturePhoto()">📸 Capture Badge</button>
+  <button class="btn" onclick="startScan()">Scan a QR Code</button>
+  <button class="btn" onclick="capturePhoto()">📸 Take a Photo</button>
 </div>
 
 <div id="scanPage">
@@ -257,7 +257,7 @@ function addToSheet() {
     return;
   }
 
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbzbeijk3L2fofiVWYbvcR1sdKSWSR97U13XfZJkxcI_XfJBhlm32Ir_04r3Tuo6GemkRA/exec";
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbxSu0thRDYmLepHf9s_bllpOyWUOr74345v2TcgDTMCeGb4k4-kpCA1OqAjRJBJyyA8/exec";
 
   const form = document.createElement("form");
   form.method = "POST";
