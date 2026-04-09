@@ -146,6 +146,10 @@ function startScan() {
 }
 
 async function capturePhoto() {
+  // 🔥 Switch to scan page FIRST
+  document.getElementById("homePage").style.display = "none";
+  document.getElementById("scanPage").style.display = "block";
+
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
@@ -155,11 +159,10 @@ async function capturePhoto() {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Convert to base64
     const base64 = await toBase64(file);
 
-    // Scan QR from image
     const html5Qr = new Html5Qrcode("reader");
+
     try {
       const result = await html5Qr.scanFile(file, true);
 
@@ -175,7 +178,7 @@ async function capturePhoto() {
       showForm(parsed !== null);
 
     } catch (err) {
-      // Failed scan → manual entry
+      // fallback
       currentData = {
         name: "",
         company: "",
