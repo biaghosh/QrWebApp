@@ -134,7 +134,7 @@
 <script>
 let currentData = { name: "", company: "", image: "" };
 let html5QrcodeScanner = null;
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpv57XS1MHAlT_mVDgEDHwU882nOdsWXoEw3aCFwqVtHhK82aX58V_431Zuhhu2fkFsg/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxN7D-U6qWtb8NR37lFLhNFsLGd2SV0_TnUPFT0TTo-NAAy7f4siWEO41LdpOKBsTvdXg/exec"; 
 
 // On Load: Check if uploader name is cached
 window.onload = () => {
@@ -215,53 +215,30 @@ function showForm() {
 }
 
 function addToSheet() {
-  const name = document.getElementById("nameInput").value.trim();
-  const company = document.getElementById("companyInput").value.trim();
-
-  if (!name && !company) {
-    alert("Please enter a name or company.");
-    return;
-  }
-
   document.getElementById("loadingOverlay").style.display = "flex";
 
-  // Create a plain object
-  const data = {
-    name: name,
-    company: company,
-    email: document.getElementById("emailInput").value.trim(),
-    notes: document.getElementById("notesInput").value.trim(),
+  const params = new URLSearchParams({
+    name: document.getElementById("nameInput").value,
+    company: document.getElementById("companyInput").value,
+    email: document.getElementById("emailInput").value,
+    notes: document.getElementById("notesInput").value,
     image: currentData.image || "",
-    uploader: localStorage.getItem('uploaderName') || "Unknown"
-  };
-
-  // We use standard form-encoded string for maximum compatibility with Apps Script
-  const searchParams = new URLSearchParams();
-  for (const key in data) {
-    searchParams.append(key, data[key]);
-  }
+    uploader: localStorage.getItem('uploaderName')
+  });
 
   fetch(SCRIPT_URL, {
     method: "POST",
-    mode: "no-cors", // Keep this to avoid CORS errors on the redirect
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: searchParams.toString()
+    mode: "no-cors",
+    body: params
   })
   .then(() => {
-    // Because of no-cors, we won't actually "see" the success body, 
-    // but if the request sent, it usually hits the script.
-    setTimeout(() => {
-      document.getElementById("loadingOverlay").style.display = "none";
-      alert("Submission sent! Check the sheet in a moment.");
-      showHome();
-    }, 500); 
+    document.getElementById("loadingOverlay").style.display = "none";
+    alert("Saved Successfully!");
+    showHome();
   })
   .catch(err => {
     document.getElementById("loadingOverlay").style.display = "none";
-    alert("Network error. Please try again.");
-    console.error(err);
+    alert("Error saving data.");
   });
 }
 
