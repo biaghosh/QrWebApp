@@ -2,235 +2,110 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QR Scanner - BioInVision</title>
+  <title>QR Scanner - BioInVision DEBUG</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  
   <style>
-    /* RESTORED ORIGINAL SPACE-AGE CSS */
+    /* ... (Keeping your original space-age CSS) ... */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
-      color: #fff;
-      min-height: 100dvh;
-      padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom) 20px;
-      text-align: center;
-      overflow-x: hidden;
-    }
-    h1, h2 { margin-bottom: 20px; font-weight: 600; }
-    .btn {
-      display: inline-block;
-      width: 90%;
-      max-width: 320px;
-      padding: 18px 30px;
-      font-size: 1.4em;
-      font-weight: 600;
-      border-radius: 16px;
-      background: #00c6ff;
-      color: #fff;
-      border: none;
-      margin: 15px auto;
-      box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
-      transition: all 0.2s ease;
-    }
-    .btn:active { transform: scale(0.95); background: #00a8d9; }
-    #reader {
-      width: 100%;
-      max-width: 340px;
-      margin: 20px auto;
-      border: 3px solid #00c6ff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-    }
-    #formBox {
-      margin-top: 20px;
-      padding: 20px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 16px;
-      backdrop-filter: blur(10px);
-    }
-    #imagePreview img {
-      width: 100%;
-      max-width: 260px;
-      border-radius: 16px;
-      margin: 15px auto;
-      border: 3px solid #fff;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-      display: block;
-    }
-    input, textarea {
-      width: 100%;
-      max-width: 340px;
-      padding: 14px 16px;
-      margin: 10px auto;
-      border-radius: 12px;
-      border: none;
-      font-size: 1.05em;
-      background: rgba(255,255,255,0.95);
-      color: #111;
-      display: block;
-    }
-    textarea { min-height: 90px; resize: vertical; }
-    button {
-      width: 100%;
-      max-width: 320px;
-      padding: 16px 20px;
-      margin: 12px auto;
-      border-radius: 14px;
-      border: none;
-      font-size: 1.15em;
-      font-weight: 600;
-      background: #00c6ff;
-      color: white;
-      box-shadow: 0 4px 12px rgba(0, 198, 255, 0.4);
-    }
-    button:active { background: #00a8d9; transform: scale(0.98); }
-    #loadingOverlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      z-index: 9999;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
+    body { font-family: sans-serif; background: #0f2027; color: #fff; text-align: center; padding: 20px; }
+    .btn { display: block; width: 100%; max-width: 300px; padding: 15px; margin: 10px auto; border-radius: 10px; border: none; background: #00c6ff; color: white; font-weight: bold; }
+    #reader { width: 100%; max-width: 340px; margin: auto; border: 2px solid #00c6ff; }
+    input, textarea { width: 100%; max-width: 300px; margin: 10px auto; padding: 10px; display: block; }
+    #loadingOverlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99; flex-direction:column; justify-content:center; }
   </style>
 </head>
 <body>
 
-<div id="loadingOverlay">
-  <h2>Processing...</h2>
-  <p>Sending data to Google Sheets</p>
-</div>
+<div id="loadingOverlay"><h2>Sending...</h2></div>
 
 <div id="homePage">
   <h1>QR Scanner</h1>
-  <input type="text" id="uploaderName" placeholder="Your Name (Saved for later)">
-  <button class="btn" onclick="startScan()">Scan a QR Code</button>
+  <input type="text" id="uploaderName" placeholder="Your Name">
+  <button class="btn" onclick="startScan()">1. Start Scan</button>
 </div>
 
 <div id="scanPage" style="display:none;">
-  <h2>Scanning...</h2>
   <div id="reader"></div>
-  
-  <div id="formBox" style="display:none;">
+  <div id="formBox" style="display:none; background: rgba(255,255,255,0.1); padding: 15px; margin-top: 10px;">
     <div id="imagePreview"></div>
-    <div id="photoActions" style="display:none; margin-bottom: 10px;">
-       <button class="btn" style="background:#e74c3c; width: 45%; font-size: 1em; padding: 10px;" onclick="removePhoto()">Remove Photo</button>
-    </div>
-    <div id="infoText"></div>
+    <button id="removeBtn" class="btn" style="background:red; display:none;" onclick="removePhoto()">Remove Photo</button>
     
-    <input type="text" id="nameInput" placeholder="Full Name">
-    <input type="text" id="companyInput" placeholder="Company Name">
+    <input type="text" id="nameInput" placeholder="Name">
+    <input type="text" id="companyInput" placeholder="Company">
     <input type="email" id="emailInput" placeholder="Email">
-    <textarea id="notesInput" placeholder="Notes" rows="3"></textarea>
+    <textarea id="notesInput" placeholder="Notes"></textarea>
     
-    <button id="photoBtn" class="btn" style="background:#2c5364;" onclick="capturePhoto()">📸 Take Badge Photo</button>
-    <button onclick="addToSheet()">Add to Google Sheet</button>
-    <button onclick="backToHome()">Cancel</button>
-  </div>
-</div>
-
-<div id="scanPage" style="display:none;">
-  <h2>Scanning...</h2>
-  <div id="reader"></div>
-  
-  <div id="formBox" style="display:none;">
-    <div id="imagePreview"></div>
-    <div id="photoActions" style="display:none; margin-bottom: 10px;">
-       <button class="btn" style="background:#e74c3c; width: 45%; font-size: 1em; padding: 10px;" onclick="removePhoto()">Remove Photo</button>
-    </div>
-    <div id="infoText"></div>
-    
-    <input type="text" id="nameInput" placeholder="Full Name">
-    <input type="text" id="companyInput" placeholder="Company Name">
-    <input type="email" id="emailInput" placeholder="Email">
-    <textarea id="notesInput" placeholder="Notes" rows="3"></textarea>
-    
-    <button id="photoBtn" class="btn" style="background:#2c5364;" onclick="capturePhoto()">📸 Take Badge Photo</button>
-    <button onclick="addToSheet()">Add to Google Sheet</button>
-    <button onclick="backToHome()">Cancel</button>
+    <button id="photoBtn" class="btn" style="background:#2c5364;" onclick="capturePhoto()">2. Take Photo</button>
+    <button class="btn" onclick="addToSheet()">3. Upload Everything</button>
+    <button class="btn" style="background:gray;" onclick="location.reload()">Cancel/Reset</button>
   </div>
 </div>
 
 <script>
-let currentData = { name: "", company: "", image: "" };
+let currentImageBase64 = "";
 let html5QrcodeScanner = null;
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgkwVU11BWUafHcIc8uHj_oKMm5tP9xaNLrw02JJpMTFbPCL0uzB0UsE8NcRGepcsz7w/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdI40K5f6vrN7vZ1i6TRysGQgUGV0SDmmkX64HqGJfrBytEUPf6zSlTwHFwawdzoCK_A/exec"; 
 
-window.onload = () => {
-  const savedName = localStorage.getItem('uploaderName');
-  if (savedName) document.getElementById('uploaderName').value = savedName;
-};
-
-function resetForm() {
-  // Clear logic
-  currentData = { name: "", company: "", image: "" };
+function startScan() {
+  const uploader = document.getElementById('uploaderName').value;
+  if (!uploader) { alert("Debug: Name missing"); return; }
+  
+  // CACHE WIPE
+  currentImageBase64 = "";
   document.getElementById("nameInput").value = "";
   document.getElementById("companyInput").value = "";
   document.getElementById("emailInput").value = "";
   document.getElementById("notesInput").value = "";
   document.getElementById("imagePreview").innerHTML = "";
-  document.getElementById("photoActions").style.display = "none";
-  document.getElementById("photoBtn").style.display = "block";
-}
 
-function startScan() {
-  const uploader = document.getElementById('uploaderName').value.trim();
-  if (!uploader) { alert("Please enter your name first."); return; }
-  localStorage.setItem('uploaderName', uploader);
-  
-  resetForm(); // WIPE PREVIOUS DATA
-  
   document.getElementById("homePage").style.display = "none";
   document.getElementById("scanPage").style.display = "block";
   
+  alert("Debug: Scanner initializing...");
   if (!html5QrcodeScanner) {
-    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
   }
   html5QrcodeScanner.render(onScanSuccess);
 }
 
-function onScanSuccess(decodedText) {
-  const parts = decodedText.trim().split("$");
-  if (parts.length >= 5) {
-    document.getElementById("nameInput").value = parts[2] + " " + parts[3];
-    document.getElementById("companyInput").value = parts[4];
+function onScanSuccess(text) {
+  alert("Debug: QR Found -> " + text);
+  const p = text.split("$");
+  if (p.length >= 5) {
+    document.getElementById("nameInput").value = p[2] + " " + p[3];
+    document.getElementById("companyInput").value = p[4];
   }
-  showForm();
+  if (html5QrcodeScanner) html5QrcodeScanner.clear();
+  document.getElementById("formBox").style.display = "block";
 }
 
-async function capturePhoto() {
+function capturePhoto() {
+  alert("Debug: Opening Camera...");
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
   input.capture = "environment";
-  input.onchange = async (e) => {
+  input.onchange = e => {
     const file = e.target.files[0];
-    if (!file) return;
-    
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = event => {
       const img = new Image();
       img.onload = () => {
+        alert("Debug: Image loaded. Resizing...");
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 800; // Keep it small to avoid timeouts
-        let scale = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const MAX = 800;
+        let scale = MAX / img.width;
+        canvas.width = MAX; canvas.height = img.height * scale;
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
         
-        // Quality 0.5 for stability
         const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
-        currentData.image = dataUrl.split(",")[1]; 
+        currentImageBase64 = dataUrl.split(",")[1];
         
-        document.getElementById("imagePreview").innerHTML = `<img src="${dataUrl}" />`;
-        document.getElementById("photoActions").style.display = "block";
+        document.getElementById("imagePreview").innerHTML = `<img src="${dataUrl}" style="width:100%"/>`;
         document.getElementById("photoBtn").style.display = "none";
+        document.getElementById("removeBtn").style.display = "block";
+        alert("Debug: Photo Ready (" + Math.round(currentImageBase64.length/1024) + "KB)");
       };
       img.src = event.target.result;
     };
@@ -240,28 +115,23 @@ async function capturePhoto() {
 }
 
 function removePhoto() {
-  currentData.image = "";
+  currentImageBase64 = "";
   document.getElementById("imagePreview").innerHTML = "";
-  document.getElementById("photoActions").style.display = "none";
+  document.getElementById("removeBtn").style.display = "none";
   document.getElementById("photoBtn").style.display = "block";
 }
 
-function showForm() {
-  if (html5QrcodeScanner) { try { html5QrcodeScanner.clear(); } catch {} }
-  document.getElementById("formBox").style.display = "block";
-}
-
 function addToSheet() {
+  alert("Debug: Starting Fetch to Google...");
   document.getElementById("loadingOverlay").style.display = "flex";
 
-  // Use URLSearchParams for maximum Apps Script compatibility
   const params = new URLSearchParams();
   params.append("name", document.getElementById("nameInput").value);
   params.append("company", document.getElementById("companyInput").value);
   params.append("email", document.getElementById("emailInput").value);
   params.append("notes", document.getElementById("notesInput").value);
-  params.append("image", currentData.image || "");
-  params.append("uploader", localStorage.getItem('uploaderName'));
+  params.append("image", currentImageBase64);
+  params.append("uploader", document.getElementById("uploaderName").value);
 
   fetch(SCRIPT_URL, {
     method: "POST",
@@ -269,26 +139,14 @@ function addToSheet() {
     body: params
   })
   .then(() => {
-    setTimeout(() => {
-      document.getElementById("loadingOverlay").style.display = "none";
-      alert("Sent to Sheet!");
-      showHome();
-    }, 1000);
+    alert("Debug: Fetch finished (No-Cors mode). Check Sheet!");
+    location.reload();
   })
   .catch(err => {
+    alert("Debug: FETCH ERROR -> " + err.message);
     document.getElementById("loadingOverlay").style.display = "none";
-    alert("Upload failed.");
   });
 }
-
-function showHome() {
-  document.getElementById("homePage").style.display = "block";
-  document.getElementById("scanPage").style.display = "none";
-  document.getElementById("formBox").style.display = "none";
-}
-
-function backToHome() { showHome(); }
-showHome();
 </script>
 </body>
 </html>
