@@ -134,7 +134,7 @@
 <script>
 let currentData = { name: "", company: "", image: "" };
 let html5QrcodeScanner = null;
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxN7D-U6qWtb8NR37lFLhNFsLGd2SV0_TnUPFT0TTo-NAAy7f4siWEO41LdpOKBsTvdXg/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLzHMkgbwOFHLWXGyK8YRdJj0ZpJiSs59IlDvhKjZKLZm5u2Dqk0FTIntZjpUc5gjFgQ/exec"; 
 
 // On Load: Check if uploader name is cached
 window.onload = () => {
@@ -215,30 +215,46 @@ function showForm() {
 }
 
 function addToSheet() {
+  const name = document.getElementById("nameInput").value.trim();
+  const company = document.getElementById("companyInput").value.trim();
+
+  if (!name && !company) {
+    alert("Please enter a name or company.");
+    return;
+  }
+
   document.getElementById("loadingOverlay").style.display = "flex";
 
-  const params = new URLSearchParams({
-    name: document.getElementById("nameInput").value,
-    company: document.getElementById("companyInput").value,
-    email: document.getElementById("emailInput").value,
-    notes: document.getElementById("notesInput").value,
+  // Create a clean data object
+  const data = {
+    name: name,
+    company: company,
+    email: document.getElementById("emailInput").value.trim(),
+    notes: document.getElementById("notesInput").value.trim(),
     image: currentData.image || "",
-    uploader: localStorage.getItem('uploaderName')
-  });
+    uploader: localStorage.getItem('uploaderName') || "Unknown"
+  };
 
   fetch(SCRIPT_URL, {
     method: "POST",
-    mode: "no-cors",
-    body: params
+    mode: "no-cors", 
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8" // This avoids CORS 'preflight' checks
+    },
+    body: JSON.stringify(data)
   })
   .then(() => {
-    document.getElementById("loadingOverlay").style.display = "none";
-    alert("Saved Successfully!");
-    showHome();
+    // In no-cors mode, we just assume success after a short delay
+    setTimeout(() => {
+      document.getElementById("loadingOverlay").style.display = "none";
+      alert("Saved Successfully!");
+      showHome();
+    }, 800);
   })
   .catch(err => {
     document.getElementById("loadingOverlay").style.display = "none";
     alert("Error saving data.");
+    console.error(err);
   });
 }
 
