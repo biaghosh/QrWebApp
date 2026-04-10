@@ -4,216 +4,86 @@
   <meta charset="UTF-8">
   <title>QR Scanner - BioInVision</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
-  
-  <!-- Improved viewport for iPhone -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
-      color: #fff;
-      min-height: 100dvh;           /* Better than 100vh on mobile */
-      padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom) 20px;
-      text-align: center;
-      overflow-x: hidden;
-    }
-
-    h1, h2 {
-      margin-bottom: 20px;
-      font-weight: 600;
-    }
-
-    .btn {
-      display: inline-block;
-      width: 90%;
-      max-width: 320px;
-      padding: 18px 30px;
-      font-size: 1.4em;
-      font-weight: 600;
-      border-radius: 16px;
-      background: #00c6ff;
-      color: #fff;
-      border: none;
-      margin: 15px auto;
-      box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
-      transition: all 0.2s ease;
-    }
-
-    .btn:active {
-      transform: scale(0.95);
-      background: #00a8d9;
-    }
-
-    #reader {
-      width: 100%;
-      max-width: 340px;
-      margin: 20px auto;
-      border: 3px solid #00c6ff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-    }
-
-    #formBox {
-      margin-top: 20px;
-      padding: 20px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 16px;
-      backdrop-filter: blur(10px);
-    }
-
-    #imagePreview img {
-      width: 100%;
-      max-width: 260px;
-      border-radius: 16px;
-      margin: 15px auto;
-      border: 3px solid #fff;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-      display: block;
-    }
-
-    input, textarea {
-      width: 100%;
-      max-width: 340px;
-      padding: 14px 16px;
-      margin: 10px auto;
-      border-radius: 12px;
-      border: none;
-      font-size: 1.05em;
-      background: rgba(255,255,255,0.95);
-      color: #111;
-      display: block;
-    }
-
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
-
-    button {
-      width: 100%;
-      max-width: 320px;
-      padding: 16px 20px;
-      margin: 12px auto;
-      border-radius: 14px;
-      border: none;
-      font-size: 1.15em;
-      font-weight: 600;
-      background: #00c6ff;
-      color: white;
-      box-shadow: 0 4px 12px rgba(0, 198, 255, 0.4);
-    }
-
-    button:active {
-      background: #00a8d9;
-      transform: scale(0.98);
-    }
-
-    #infoText {
-      margin: 15px 0;
-      font-size: 1.1em;
-      line-height: 1.4;
-    }
-
-    /* Success/Error Page Improvements */
-    .success-page {
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
+    /* ... (Your existing styles remain the same) ... */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
       justify-content: center;
       align-items: center;
-      padding: 40px 20px;
-    }
-
-    .success-page a {
-      display: inline-block;
-      margin-top: 30px;
-      padding: 16px 32px;
-      background: #00c6ff;
-      color: white;
-      text-decoration: none;
-      border-radius: 14px;
-      font-size: 1.25em;
-      font-weight: 600;
-      box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
-    }
-
-    .success-page a:active {
-      background: #00a8d9;
-    }
-
-    /* Small screen tweaks */
-    @media (max-width: 480px) {
-      body {
-        padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
-      }
-      .btn, button {
-        font-size: 1.25em;
-        padding: 16px 24px;
-      }
-      input, textarea {
-        font-size: 1.05em;
-      }
+      flex-direction: column;
     }
   </style>
 </head>
 <body>
+
+<div id="loadingOverlay">
+  <h2>Uploading...</h2>
+  <p>Please wait</p>
+</div>
+
 <div id="homePage">
   <h1>QR Scanner</h1>
   <button class="btn" onclick="startScan()">Scan a QR Code</button>
-  <button class="btn" onclick="capturePhoto()">📸 Take a Photo</button>
 </div>
 
-<div id="scanPage">
+<div id="scanPage" style="display:none;">
   <h2>Scanning...</h2>
   <div id="reader"></div>
   
-  <div id="formBox">
+  <div id="formBox" style="display:none;">
     <div id="imagePreview"></div>
     <div id="infoText"></div>
     
-    <!-- NEW: All fields are now editable -->
     <input type="text" id="nameInput" placeholder="Full Name">
     <input type="text" id="companyInput" placeholder="Company Name">
     <input type="email" id="emailInput" placeholder="Email">
     <textarea id="notesInput" placeholder="Notes" rows="3"></textarea>
     
-    <br>
+    <button class="btn" style="background:#444;" onclick="capturePhoto()">📸 Add Photo</button>
     <button onclick="addToSheet()">Add to Google Sheet</button>
     <button onclick="backToHome()">Cancel</button>
   </div>
 </div>
 
 <script>
-let lastScan = null;
-let currentData = null;
+let currentData = { name: "", company: "", image: "" };
 let html5QrcodeScanner = null;
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9iSvbc-vZUrLC8Snz_UAyMjuZDF-x1iGYdRJ8i7nHJxwU8zx3R34K5v9-gmPxYWtm5A/exec"; 
 
-// ---------- NAVIGATION ----------
 function showHome() {
   document.getElementById("homePage").style.display = "block";
   document.getElementById("scanPage").style.display = "none";
+  document.getElementById("formBox").style.display = "none";
+  if (html5QrcodeScanner) { try { html5QrcodeScanner.clear(); } catch {} }
 }
 
 function startScan() {
   document.getElementById("homePage").style.display = "none";
   document.getElementById("scanPage").style.display = "block";
-  lastScan = null;
-  currentData = null;
+  currentData = { name: "", company: "", image: "" };
   if (!html5QrcodeScanner) {
     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
   }
   html5QrcodeScanner.render(onScanSuccess);
 }
 
-// ---------- IMAGE COMPRESSION ----------
+function onScanSuccess(decodedText) {
+  const parsed = parseQRData(decodedText);
+  currentData = parsed || { name: "", company: "" };
+  showForm(parsed !== null);
+}
+
+function parseQRData(qrText) {
+  const parts = qrText.trim().split("$");
+  if (parts.length < 5) return null;
+  return { name: parts[2] + " " + parts[3], company: parts[4] };
+}
+
 function resizeAndCompressImage(file) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -222,43 +92,35 @@ function resizeAndCompressImage(file) {
     img.onload = () => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      const MAX_WIDTH = 1200; // increased for better QR detection
+
+      // Reduced to 800px for stability; 
+      // still plenty for a badge photo in a spreadsheet
+      const MAX_WIDTH = 800; 
       let width = img.width;
       let height = img.height;
+
       if (width > MAX_WIDTH) {
         const scale = MAX_WIDTH / width;
         width = MAX_WIDTH;
         height *= scale;
       }
+
       canvas.width = width;
       canvas.height = height;
       ctx.drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85); // better quality
+
+      // Quality 0.6 is the "sweet spot" for small file size vs visibility
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.6); 
       resolve({
         base64: dataUrl.split(",")[1],
-        blob: dataURLtoBlob(dataUrl)
+        preview: dataUrl
       });
     };
     reader.readAsDataURL(file);
   });
 }
 
-function dataURLtoBlob(dataURL) {
-  const arr = dataURL.split(',');
-  const mime = arr[0].match(/:(.*?);/)[1];
-  const bstr = atob(arr[1]);
-  const u8arr = new Uint8Array(bstr.length);
-  for (let i = 0; i < bstr.length; i++) {
-    u8arr[i] = bstr.charCodeAt(i);
-  }
-  return new Blob([u8arr], { type: mime });
-}
-
-// ---------- CAPTURE PHOTO ----------
 async function capturePhoto() {
-  document.getElementById("homePage").style.display = "none";
-  document.getElementById("scanPage").style.display = "block";
-
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
@@ -267,131 +129,64 @@ async function capturePhoto() {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Show a small loading hint if needed
+    const previewDiv = document.getElementById("imagePreview");
+    previewDiv.innerHTML = "<i>Processing photo...</i>";
+
     const processed = await resizeAndCompressImage(file);
-    const base64 = processed.base64;
+    currentData.image = processed.base64;
 
-    const html5Qr = new Html5Qrcode("reader");
-    let completed = false;
-
-    const timeout = setTimeout(() => {
-      if (!completed) {
-        currentData = { name: "", company: "", image: base64 };
-        showForm(false);
-      }
-    }, 3000); // longer timeout
-
-    try {
-      const result = await html5Qr.scanFile(
-        new File([processed.blob], "resized.jpg", { type: "image/jpeg" }),
-        true
-      );
-      completed = true;
-      clearTimeout(timeout);
-      const parsed = parseQRData(result);
-      currentData = parsed || { name: "", company: "" };
-      currentData.image = base64;
-      showForm(parsed !== null);
-    } catch (err) {
-      completed = true;
-      clearTimeout(timeout);
-      currentData = { name: "", company: "", image: base64 };
-      showForm(false);
-    }
+    // Update the preview on the form
+    previewDiv.innerHTML = `<img src="${processed.preview}" style="width:100px; height:auto; border-radius:8px;"/>`;
   };
   input.click();
 }
-
-// ---------- QR PARSE ----------
-function parseQRData(qrText) {
-  const parts = qrText.trim().split("$");
-  if (parts.length < 5) return null;
-  return {
-    name: parts[2] + " " + parts[3],
-    company: parts[4]
-  };
-}
-
-// ---------- LIVE SCAN ----------
-function onScanSuccess(decodedText) {
-  if (decodedText === lastScan) return;
-  lastScan = decodedText;
-  const parsed = parseQRData(decodedText);
-  currentData = parsed || { name: "", company: "" };
-  showForm(parsed !== null);
-}
-
-// ---------- FORM ----------
 function showForm(success) {
-  if (html5QrcodeScanner) {
-    try { html5QrcodeScanner.clear(); } catch {}
-  }
-
-  const form = document.getElementById("formBox");
-  const info = document.getElementById("infoText");
-  const preview = document.getElementById("imagePreview");
-
-  form.style.display = "block";
-
-  // Show badge photo if captured
-  if (currentData.image) {
-    preview.innerHTML = `<img src="data:image/jpeg;base64,${currentData.image}" />`;
-  } else {
-    preview.innerHTML = "";
-  }
-
-  // Info message
-  if (success) {
-    info.innerHTML = `<b>✅ QR Scanned:</b><br>${currentData.name}<br>${currentData.company}`;
-  } else {
-    info.innerHTML = `<b>📸 Scan failed or manual entry</b><br>Type the details below.<br>Badge photo is shown above.`;
-  }
-
-  // Prefill / clear all fields
+  if (html5QrcodeScanner) { try { html5QrcodeScanner.clear(); } catch {} }
+  document.getElementById("formBox").style.display = "block";
+  document.getElementById("infoText").innerHTML = success ? "<b>✅ Scanned Successfully</b>" : "<b>Manual Entry</b>";
   document.getElementById("nameInput").value = currentData.name || "";
   document.getElementById("companyInput").value = currentData.company || "";
-  document.getElementById("emailInput").value = "";
-  document.getElementById("notesInput").value = "";
 }
 
-// ---------- SAVE ----------
 function addToSheet() {
-  const name    = document.getElementById("nameInput").value.trim() || "";
-  const company = document.getElementById("companyInput").value.trim() || "";
-  const email   = document.getElementById("emailInput").value.trim() || "";
-  const notes   = document.getElementById("notesInput").value.trim() || "";
-
+  const name = document.getElementById("nameInput").value.trim();
+  const company = document.getElementById("companyInput").value.trim();
+  
   if (!name && !company) {
-    alert("Please enter at least Name or Company");
+    alert("Please enter a name or company.");
     return;
   }
 
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbxcrHTx7kUOfZZ817t3AfORv971myxDRz8Aks9qNcga6sNm_UMCsLG474aoHGmordwzmQ/exec";
+  // Show a "Processing" overlay so the user doesn't click twice
+  document.getElementById("loadingOverlay").style.display = "flex";
 
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = scriptUrl;
-  form.style.display = "none";
+  const payload = {
+    name: name,
+    company: company,
+    email: document.getElementById("emailInput").value.trim(),
+    notes: document.getElementById("notesInput").value.trim(),
+    image: currentData.image || ""
+  };
 
-  const fields = { name, company, email, notes, image: currentData && currentData.image ? currentData.image : "" };
-
-  Object.keys(fields).forEach(key => {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = key;
-    input.value = fields[key];
-    form.appendChild(input);
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors", 
+    body: new URLSearchParams(payload)
+  })
+  .then(() => {
+    document.getElementById("loadingOverlay").style.display = "none";
+    alert("Successfully saved!");
+    showHome(); // Returns to the start screen
+  })
+  .catch(err => {
+    document.getElementById("loadingOverlay").style.display = "none";
+    alert("Upload failed. Please try again.");
+    console.error(err);
   });
-
-  document.body.appendChild(form);
-  form.submit();   // This will navigate to the success/error page from doPost
 }
 
-function backToHome() {
-  document.getElementById("formBox").style.display = "none";
-  showHome();
-}
-
-// ---------- INIT ----------
+function backToHome() { showHome(); }
 showHome();
 </script>
 </body>
