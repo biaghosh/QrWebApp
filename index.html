@@ -134,7 +134,7 @@
 <script>
 let currentData = { name: "", company: "", image: "" };
 let html5QrcodeScanner = null;
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyeMzDJb9Mq_qNCD1Zvpd78P8USnox7CcWQmQEIjdqudFizHw0ChLrtaHFtZjfkzyHUTQ/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpv57XS1MHAlT_mVDgEDHwU882nOdsWXoEw3aCFwqVtHhK82aX58V_431Zuhhu2fkFsg/exec"; 
 
 // On Load: Check if uploader name is cached
 window.onload = () => {
@@ -215,30 +215,53 @@ function showForm() {
 }
 
 function addToSheet() {
+  const name = document.getElementById("nameInput").value.trim();
+  const company = document.getElementById("companyInput").value.trim();
+
+  if (!name && !company) {
+    alert("Please enter a name or company.");
+    return;
+  }
+
   document.getElementById("loadingOverlay").style.display = "flex";
 
-  const params = new URLSearchParams({
-    name: document.getElementById("nameInput").value,
-    company: document.getElementById("companyInput").value,
-    email: document.getElementById("emailInput").value,
-    notes: document.getElementById("notesInput").value,
+  // Create a plain object
+  const data = {
+    name: name,
+    company: company,
+    email: document.getElementById("emailInput").value.trim(),
+    notes: document.getElementById("notesInput").value.trim(),
     image: currentData.image || "",
-    uploader: localStorage.getItem('uploaderName')
-  });
+    uploader: localStorage.getItem('uploaderName') || "Unknown"
+  };
+
+  // We use standard form-encoded string for maximum compatibility with Apps Script
+  const searchParams = new URLSearchParams();
+  for (const key in data) {
+    searchParams.append(key, data[key]);
+  }
 
   fetch(SCRIPT_URL, {
     method: "POST",
-    mode: "no-cors",
-    body: params
+    mode: "no-cors", // Keep this to avoid CORS errors on the redirect
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: searchParams.toString()
   })
   .then(() => {
-    document.getElementById("loadingOverlay").style.display = "none";
-    alert("Saved Successfully!");
-    showHome();
+    // Because of no-cors, we won't actually "see" the success body, 
+    // but if the request sent, it usually hits the script.
+    setTimeout(() => {
+      document.getElementById("loadingOverlay").style.display = "none";
+      alert("Submission sent! Check the sheet in a moment.");
+      showHome();
+    }, 500); 
   })
   .catch(err => {
     document.getElementById("loadingOverlay").style.display = "none";
-    alert("Error saving data.");
+    alert("Network error. Please try again.");
+    console.error(err);
   });
 }
 
