@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
   <style>
-    /* RESTORED ORIGINAL SPACE-AGE CSS */
+    /* ... (Your original space-age CSS remains the same) ... */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -18,97 +18,35 @@
       text-align: center;
       overflow-x: hidden;
     }
-    h1, h2 { margin-bottom: 20px; font-weight: 600; }
-    .btn {
-      display: inline-block;
-      width: 90%;
-      max-width: 320px;
-      padding: 18px 30px;
-      font-size: 1.4em;
-      font-weight: 600;
-      border-radius: 16px;
-      background: #00c6ff;
-      color: #fff;
-      border: none;
-      margin: 15px auto;
-      box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
-      transition: all 0.2s ease;
-    }
-    .btn:active { transform: scale(0.95); background: #00a8d9; }
-    #reader {
-      width: 100%;
-      max-width: 340px;
-      margin: 20px auto;
-      border: 3px solid #00c6ff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-    }
-    #formBox {
-      margin-top: 20px;
-      padding: 20px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 16px;
-      backdrop-filter: blur(10px);
-    }
-    #imagePreview img {
-      width: 100%;
-      max-width: 260px;
-      border-radius: 16px;
-      margin: 15px auto;
-      border: 3px solid #fff;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-      display: block;
-    }
-    input, textarea {
-      width: 100%;
-      max-width: 340px;
-      padding: 14px 16px;
-      margin: 10px auto;
-      border-radius: 12px;
-      border: none;
-      font-size: 1.05em;
-      background: rgba(255,255,255,0.95);
-      color: #111;
-      display: block;
-    }
-    textarea { min-height: 90px; resize: vertical; }
-    button {
-      width: 100%;
-      max-width: 320px;
-      padding: 16px 20px;
-      margin: 12px auto;
-      border-radius: 14px;
-      border: none;
-      font-size: 1.15em;
-      font-weight: 600;
-      background: #00c6ff;
-      color: white;
-      box-shadow: 0 4px 12px rgba(0, 198, 255, 0.4);
-    }
-    button:active { background: #00a8d9; transform: scale(0.98); }
+    .btn { display: inline-block; width: 90%; max-width: 320px; padding: 18px 30px; font-size: 1.4em; font-weight: 600; border-radius: 16px; background: #00c6ff; color: #fff; border: none; margin: 15px auto; box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3); transition: all 0.2s ease; }
+    #reader { width: 100%; max-width: 340px; margin: 20px auto; border: 3px solid #00c6ff; border-radius: 16px; overflow: hidden; }
+    #formBox { margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.08); border-radius: 16px; backdrop-filter: blur(10px); }
+    #imagePreview img { width: 100%; max-width: 260px; border-radius: 16px; margin: 15px auto; border: 3px solid #fff; display: block; }
+    input, textarea { width: 100%; max-width: 340px; padding: 14px 16px; margin: 10px auto; border-radius: 12px; border: none; font-size: 1.05em; background: rgba(255,255,255,0.95); color: #111; display: block; }
+    
+    /* DEBUG POPUP STYLING */
     #loadingOverlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      z-index: 9999;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); z-index: 9999; flex-direction: column; justify-content: center; align-items: center;
+    }
+    #debugLog {
+      width: 80%; max-width: 300px; background: #000; color: #0f0; font-family: monospace; 
+      font-size: 10px; padding: 10px; margin-top: 20px; border-radius: 8px; text-align: left;
+      height: 120px; overflow-y: auto; border: 1px solid #333;
     }
   </style>
 </head>
 <body>
 
 <div id="loadingOverlay">
-  <h2>Processing...</h2>
-  <p>Sending data to Google Sheets</p>
+  <h2 id="statusTitle">Processing...</h2>
+  <div id="debugLog"></div>
+  <button id="closeDebug" style="display:none; margin-top:10px; padding:10px;" onclick="showHome()">Back to Home</button>
 </div>
 
 <div id="homePage">
   <h1>QR Scanner</h1>
-  <input type="text" id="uploaderName" placeholder="Your Name (Saved for later)">
+  <input type="text" id="uploaderName" placeholder="Your Name (Saved)">
   <button class="btn" onclick="startScan()">Scan a QR Code</button>
 </div>
 
@@ -118,48 +56,59 @@
   
   <div id="formBox" style="display:none;">
     <div id="imagePreview"></div>
-    <div id="infoText"></div>
     
+    <div id="photoControls" style="display:none;">
+      <button class="btn" style="background:#e74c3c; width:80%; font-size:1em; padding:10px;" onclick="removePhoto()">❌ Remove / Retake Photo</button>
+    </div>
+
     <input type="text" id="nameInput" placeholder="Full Name">
     <input type="text" id="companyInput" placeholder="Company Name">
     <input type="email" id="emailInput" placeholder="Email">
     <textarea id="notesInput" placeholder="Notes" rows="3"></textarea>
     
-    <button class="btn" style="background:#2c5364;" onclick="capturePhoto()">📸 Take Badge Photo</button>
-    <button onclick="addToSheet()">Add to Google Sheet</button>
-    <button onclick="backToHome()">Cancel</button>
+    <button id="photoBtn" class="btn" style="background:#2c5364;" onclick="capturePhoto()">📸 Take Badge Photo</button>
+    <button class="btn" onclick="addToSheet()">Add to Google Sheet</button>
+    <button class="btn" style="background:gray;" onclick="backToHome()">Cancel</button>
   </div>
 </div>
 
 <script>
 let currentData = { name: "", company: "", image: "" };
 let html5QrcodeScanner = null;
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLzHMkgbwOFHLWXGyK8YRdJj0ZpJiSs59IlDvhKjZKLZm5u2Dqk0FTIntZjpUc5gjFgQ/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6EFbsxDog_6sNoY2gKXJQAi06m1clO8Nj9eDIMxed3H_nTSWt2a5xxuvn9SP52LQl_g/exec"; 
 
-// On Load: Check if uploader name is cached
 window.onload = () => {
   const savedName = localStorage.getItem('uploaderName');
   if (savedName) document.getElementById('uploaderName').value = savedName;
 };
 
-function showHome() {
-  document.getElementById("homePage").style.display = "block";
-  document.getElementById("scanPage").style.display = "none";
-  document.getElementById("formBox").style.display = "none";
-  if (html5QrcodeScanner) { try { html5QrcodeScanner.clear(); } catch {} }
+function logDebug(msg) {
+  const log = document.getElementById("debugLog");
+  log.innerHTML += `> ${msg}<br>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function resetForm() {
+  logDebug("Resetting form data...");
+  currentData.image = "";
+  document.getElementById("nameInput").value = "";
+  document.getElementById("companyInput").value = "";
+  document.getElementById("emailInput").value = "";
+  document.getElementById("notesInput").value = "";
+  document.getElementById("imagePreview").innerHTML = "";
+  document.getElementById("photoControls").style.display = "none";
+  document.getElementById("photoBtn").style.display = "block";
 }
 
 function startScan() {
   const uploader = document.getElementById('uploaderName').value.trim();
-  if (!uploader) {
-    alert("Please enter your name first.");
-    return;
-  }
-  localStorage.setItem('uploaderName', uploader); // Cache it
+  if (!uploader) { alert("Enter your name first."); return; }
+  localStorage.setItem('uploaderName', uploader);
+  
+  resetForm(); // CLEAR PREVIOUS CACHE
   
   document.getElementById("homePage").style.display = "none";
   document.getElementById("scanPage").style.display = "block";
-  currentData = { name: "", company: "", image: "" };
   
   if (!html5QrcodeScanner) {
     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
@@ -168,10 +117,11 @@ function startScan() {
 }
 
 function onScanSuccess(decodedText) {
+  logDebug("QR Scanned successfully.");
   const parts = decodedText.trim().split("$");
   if (parts.length >= 5) {
-    currentData.name = parts[2] + " " + parts[3];
-    currentData.company = parts[4];
+    document.getElementById("nameInput").value = parts[2] + " " + parts[3];
+    document.getElementById("companyInput").value = parts[4];
   }
   showForm();
 }
@@ -185,20 +135,26 @@ async function capturePhoto() {
     const file = e.target.files[0];
     if (!file) return;
     
+    logDebug("Processing image...");
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 800;
+        const MAX_WIDTH = 800; 
         let scale = MAX_WIDTH / img.width;
         canvas.width = MAX_WIDTH;
         canvas.height = img.height * scale;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         
-        currentData.image = canvas.toDataURL("image/jpeg", 0.6).split(",")[1];
-        document.getElementById("imagePreview").innerHTML = `<img src="data:image/jpeg;base64,${currentData.image}" />`;
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
+        currentData.image = dataUrl.split(",")[1];
+        
+        logDebug(`Image ready: ~${Math.round(currentData.image.length/1024)}KB`);
+        document.getElementById("imagePreview").innerHTML = `<img src="${dataUrl}" />`;
+        document.getElementById("photoControls").style.display = "block";
+        document.getElementById("photoBtn").style.display = "none";
       };
       img.src = event.target.result;
     };
@@ -207,55 +163,61 @@ async function capturePhoto() {
   input.click();
 }
 
+function removePhoto() {
+  currentData.image = "";
+  document.getElementById("imagePreview").innerHTML = "";
+  document.getElementById("photoControls").style.display = "none";
+  document.getElementById("photoBtn").style.display = "block";
+  logDebug("Photo removed.");
+}
+
 function showForm() {
   if (html5QrcodeScanner) { try { html5QrcodeScanner.clear(); } catch {} }
   document.getElementById("formBox").style.display = "block";
-  document.getElementById("nameInput").value = currentData.name || "";
-  document.getElementById("companyInput").value = currentData.company || "";
 }
 
 function addToSheet() {
-  const name = document.getElementById("nameInput").value.trim();
-  const company = document.getElementById("companyInput").value.trim();
+  const overlay = document.getElementById("loadingOverlay");
+  overlay.style.display = "flex";
+  document.getElementById("debugLog").innerHTML = "";
+  logDebug("Starting upload...");
 
-  if (!name && !company) {
-    alert("Please enter a name or company.");
-    return;
-  }
-
-  document.getElementById("loadingOverlay").style.display = "flex";
-
-  // Create a clean data object
   const data = {
-    name: name,
-    company: company,
-    email: document.getElementById("emailInput").value.trim(),
-    notes: document.getElementById("notesInput").value.trim(),
+    name: document.getElementById("nameInput").value,
+    company: document.getElementById("companyInput").value,
+    email: document.getElementById("emailInput").value,
+    notes: document.getElementById("notesInput").value,
     image: currentData.image || "",
-    uploader: localStorage.getItem('uploaderName') || "Unknown"
+    uploader: localStorage.getItem('uploaderName')
   };
+
+  logDebug("Payload constructed. Sending fetch...");
 
   fetch(SCRIPT_URL, {
     method: "POST",
-    mode: "no-cors", 
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8" // This avoids CORS 'preflight' checks
-    },
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   })
   .then(() => {
-    // In no-cors mode, we just assume success after a short delay
+    logDebug("Request sent (no-cors).");
     setTimeout(() => {
-      document.getElementById("loadingOverlay").style.display = "none";
-      alert("Saved Successfully!");
+      overlay.style.display = "none";
+      alert("Successfully Saved!");
       showHome();
-    }, 800);
+    }, 1500);
   })
   .catch(err => {
-    document.getElementById("loadingOverlay").style.display = "none";
-    alert("Error saving data.");
-    console.error(err);
+    logDebug("FETCH ERROR: " + err.message);
+    document.getElementById("statusTitle").innerText = "Upload Failed";
+    document.getElementById("closeDebug").style.display = "block";
   });
+}
+
+function showHome() {
+  document.getElementById("homePage").style.display = "block";
+  document.getElementById("scanPage").style.display = "none";
+  document.getElementById("loadingOverlay").style.display = "none";
 }
 
 function backToHome() { showHome(); }
